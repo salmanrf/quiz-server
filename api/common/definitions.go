@@ -1,4 +1,4 @@
-package api
+package common
 
 type ApiResponse[resType interface{}] struct {
 	Message string `json:"message"`

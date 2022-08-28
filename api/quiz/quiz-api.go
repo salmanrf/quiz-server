@@ -7,9 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/salmanrf/svelte-go-quiz-server/api"
+	"github.com/salmanrf/svelte-go-quiz-server/api/common"
 	"github.com/salmanrf/svelte-go-quiz-server/api/quiz/dto"
-	"github.com/salmanrf/svelte-go-quiz-server/api/quiz/models"
 	"github.com/salmanrf/svelte-go-quiz-server/quiz"
 )
 
@@ -31,7 +30,7 @@ func CreateQuiz(w http.ResponseWriter, r *http.Request) {
 
 	success := quiz.Create(body);
 
-	var response = api.ApiResponse[interface{}]{Message: "Success"}
+	var response = common.ApiResponse[interface{}]{Message: "Success"}
 
 	if !success {
 		response.Message = "Quiz with this code already exists."
@@ -54,14 +53,14 @@ func FindQuizzes(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println("page_number", page_number)
 	// fmt.Println("page_size", page_size)
 	
-	data := models.FindRes[quiz.Quiz]{
+	data := common.FindRes[quiz.Quiz]{
 		Items: quizzes,
 		TotalItems: 100,
 		PageSize: 100,
 		PageNumber: 1,
 	}
 	
-	response := api.ApiResponse[models.FindRes[quiz.Quiz]]{
+	response := common.ApiResponse[common.FindRes[quiz.Quiz]]{
 		Message: "Success", 
 		Data: data,
 	}

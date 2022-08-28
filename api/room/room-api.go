@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/salmanrf/svelte-go-quiz-server/api/common"
 	"github.com/salmanrf/svelte-go-quiz-server/api/room/dto"
 	"github.com/salmanrf/svelte-go-quiz-server/quiz"
 	"github.com/salmanrf/svelte-go-quiz-server/wshandler"
@@ -27,7 +28,25 @@ func CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wshandler.Create(body, w, r)
+	room, err := wshandler.Create(body)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var data common.ApiResponse[wshandler.Room]
+
+	result, jsonerr := json.Marshal(data)
+
+	if jsonerr != nil {
+		http.Error(w, jsonerr.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data.Data = *room
+
+	w.Write(result)
 }
 
 func JoinRoom(w http.ResponseWriter, r *http.Request) {
@@ -41,4 +60,32 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wshandler.Join(body, w, r)
+}
+
+func FindRooms(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	rooms := wshandler.Find()
+	
+	data := common.FindRes[wshandler.Room]{
+		Items: rooms,
+		PageSize: 100,
+		PageNumber: 1,
+		TotalItems: 100,
+	}
+
+	response := common.ApiResponse[common.FindRes[wshandler.Room]]{
+		Message: "Success",
+		Data: data,
+	}
+
+	responseBody, err := json.Marshal(response)
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(responseBody)
 }

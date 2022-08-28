@@ -43,7 +43,7 @@ func main() {
 		http.Error(w, "Not Found", http.StatusNotFound)
 	})
 
-	http.HandleFunc("/ws/room", func (w http.ResponseWriter, r * http.Request) {
+	http.HandleFunc("/api/room", func (w http.ResponseWriter, r * http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "*")
 
@@ -55,6 +55,11 @@ func main() {
 
 		if r.Method == http.MethodPost {
 			room.CreateRoom(w, r)
+			return
+		}
+
+		if r.Method == http.MethodGet {
+			room.FindRooms(w, r)
 			return
 		}
 		

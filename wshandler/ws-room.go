@@ -2,13 +2,11 @@ package wshandler
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/aidarkhanov/nanoid"
 	"github.com/gorilla/websocket"
-	"github.com/salmanrf/svelte-go-quiz-server/api"
+	"github.com/salmanrf/svelte-go-quiz-server/api/common"
 	"github.com/salmanrf/svelte-go-quiz-server/api/room/dto"
 )
 
@@ -20,29 +18,31 @@ var Upgrader = websocket.Upgrader{
 var rooms = make(map[string]*Room)
 
 type Room struct {
-	Code string;
+	Code string `json:"code"`
+	Quota int `json:"quota"`
+	UsedQuota int `json:"used_quota"`
 	members map[*Member]Member;
 	broadcast chan []byte;
 	register chan *Member;
 	unregister chan *Member;
 }
 
-func Create(createDto dto.CreateRoomDto, w http.ResponseWriter, r *http.Request) (string, error) {
-	Upgrader.CheckOrigin = func (*http.Request) bool {return true}
+func Create(createDto dto.CreateRoomDto) (*Room, error) {
+	// Upgrader.CheckOrigin = func (*http.Request) bool {return true}
 
-	ws, err := Upgrader.Upgrade(w, r, nil)
+	// ws, err := Upgrader.Upgrade(w, r, nil)
 
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return nil, err
+	// }
 
 	alphabet := nanoid.DefaultAlphabet
 	id, err := nanoid.Generate(alphabet, 10)
 
 	if err != nil {
-		ws.WriteJSON(api.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
-		return "", err
+		// ws.WriteJSON(api.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
+		return nil, err
 	}
 	
 	newRoom := &Room{
@@ -51,29 +51,46 @@ func Create(createDto dto.CreateRoomDto, w http.ResponseWriter, r *http.Request)
 
 	rooms[newRoom.Code] = newRoom
 
-	id, err = nanoid.Generate(alphabet, 10)
-	
-	if err != nil {
-		ws.WriteJSON(api.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
-		return "", err
-	}
-	
-	roomAdmin := &Member{
-		Id: id,
-		Role: 1,
-		room: newRoom,
-		conn: ws,
-		Username: createDto.AdminName,
-	}
-	
 	go newRoom.Init()
+	
+	return newRoom, nil
+	
+	// id, err = nanoid.Generate(alphabet, 10)
+	
+	// if err != nil {
+	// 	ws.WriteJSON(api.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
+	// 	return nil, err
+	// }
+	
+	// roomAdmin := &Member{
+	// 	Id: id,
+	// 	Role: 1,
+	// 	room: newRoom,
+	// 	conn: ws,
+	// 	Username: createDto.AdminName,
+	// }
+	
+	// go newRoom.Init()
 
-	fmt.Println("newRoom", newRoom)
-	fmt.Println("roomAdmin", roomAdmin)
+	// fmt.Println("newRoom", newRoom)
+	// fmt.Println("roomAdmin", roomAdmin)
 	
-	newRoom.register <- roomAdmin
+	// newRoom.register <- roomAdmin
 	
-	return "", err
+	// return newRoom, err
+}
+
+func Find() []Room {
+	result := make([]Room, len(rooms))
+	
+	index := 0
+	for _, r := range rooms {
+		result[index] = *r
+		
+		index++
+	}
+
+	return result
 }
 
 func Join(joinDto dto.JoinRoomDto, w http.ResponseWriter, r * http.Request) (error) {
@@ -93,7 +110,7 @@ func Join(joinDto dto.JoinRoomDto, w http.ResponseWriter, r * http.Request) (err
 	id, err := nanoid.Generate(alphabet, 10)
 	
 	if err != nil {
-		ws.WriteJSON(api.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
+		ws.WriteJSON(common.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
 		ws.Close()
 	}
 	

@@ -1,4 +1,4 @@
-package models
+package common
 
 type FindRes[ResType interface{}] struct {
 	Items []ResType `json:"items"`

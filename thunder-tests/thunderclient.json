@@ -48,11 +48,30 @@
     "colId": "12e8f618-f60a-46e8-bf10-ef5c83e36bc7",
     "containerId": "",
     "name": "Create Room",
-    "url": "localhost:8080/ws/room",
+    "url": "localhost:8080/api/room",
     "method": "POST",
     "sortNum": 10000,
     "created": "2022-08-28T06:09:46.032Z",
-    "modified": "2022-08-28T06:11:13.548Z",
+    "modified": "2022-08-28T08:23:08.199Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"quiz_code\": \"ashquiz\",\n  \"admin_name\": \"Nortnb\",\n  \"password\": \"\",\n  \"next_question_interval\": 500\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "988b8e48-44ad-4386-bb7f-cf0235c9b19d",
+    "colId": "12e8f618-f60a-46e8-bf10-ef5c83e36bc7",
+    "containerId": "",
+    "name": "Find Room",
+    "url": "localhost:8080/api/room",
+    "method": "GET",
+    "sortNum": 20000,
+    "created": "2022-08-28T08:23:25.495Z",
+    "modified": "2022-08-28T08:23:40.250Z",
     "headers": [],
     "params": [],
     "body": {
