@@ -1,0 +1,23 @@
+@startuml
+!pragma useVerticalIf on
+|Client|
+start
+:Emit Join Room;
+note left
+  {quiz_code: "123"}
+end note
+|#AntiqueWhite|Server|
+:Find "123" Room;
+if(Room exists) then(Y)
+  :Emit Join "123" Accept;
+  |Client|
+  :Enter Room Interface;
+else 
+  :Emit Join Error;
+  |Client|
+  :Prompt Error;
+endif
+|Client|
+
+stop
+@enduml

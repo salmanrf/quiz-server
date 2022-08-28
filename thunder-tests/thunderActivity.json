@@ -1,0 +1,16 @@
+[
+  {
+    "_id": "7936b738-9627-44d0-84f6-f78f6097fa2f",
+    "colId": "history",
+    "containerId": "",
+    "name": "localhost:8080/api/quiz",
+    "url": "localhost:8080/api/quiz",
+    "method": "GET",
+    "sortNum": 0,
+    "created": "2022-08-25T01:20:51.227Z",
+    "modified": "2022-08-27T13:39:33.643Z",
+    "headers": [],
+    "params": [],
+    "tests": []
+  }
+]

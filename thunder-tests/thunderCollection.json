@@ -1,0 +1,16 @@
+[
+  {
+    "_id": "8cbcdab1-1900-44cc-90e8-68c1ba2c7b68",
+    "colName": "Quiz",
+    "created": "2022-08-25T01:23:44.271Z",
+    "sortNum": 10000,
+    "folders": []
+  },
+  {
+    "_id": "12e8f618-f60a-46e8-bf10-ef5c83e36bc7",
+    "colName": "Room",
+    "created": "2022-08-28T06:09:38.648Z",
+    "sortNum": 20000,
+    "folders": []
+  }
+]
