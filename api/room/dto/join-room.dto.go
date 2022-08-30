@@ -1,6 +1,6 @@
 package dto
 
 type JoinRoomDto struct {
-	QuizCode string `json:"quiz_code"`
+	RoomCode string `json:"room_code"`
 	Username string `json:"username"`
 }

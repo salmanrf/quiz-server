@@ -80,5 +80,25 @@
       "form": []
     },
     "tests": []
+  },
+  {
+    "_id": "8b951f7f-6be8-401f-89bf-4eccd532e182",
+    "colId": "12e8f618-f60a-46e8-bf10-ef5c83e36bc7",
+    "containerId": "",
+    "name": "Join Room",
+    "url": "localhost:8080/ws/room?room_code=w8Zbb8t5qQ",
+    "method": "GET",
+    "sortNum": 15000,
+    "created": "2022-08-28T08:46:24.551Z",
+    "modified": "2022-08-30T01:57:39.004Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "room_code",
+        "value": "w8Zbb8t5qQ",
+        "isPath": false
+      }
+    ],
+    "tests": []
   }
 ]

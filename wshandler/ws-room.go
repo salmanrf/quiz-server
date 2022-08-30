@@ -1,7 +1,9 @@
 package wshandler
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/aidarkhanov/nanoid"
@@ -16,16 +18,6 @@ var Upgrader = websocket.Upgrader{
 }
 
 var rooms = make(map[string]*Room)
-
-type Room struct {
-	Code string `json:"code"`
-	Quota int `json:"quota"`
-	UsedQuota int `json:"used_quota"`
-	members map[*Member]Member;
-	broadcast chan []byte;
-	register chan *Member;
-	unregister chan *Member;
-}
 
 func Create(createDto dto.CreateRoomDto) (*Room, error) {
 	// Upgrader.CheckOrigin = func (*http.Request) bool {return true}
@@ -47,6 +39,10 @@ func Create(createDto dto.CreateRoomDto) (*Room, error) {
 	
 	newRoom := &Room{
 		Code: id,
+		members: make(map[*Member]Member),
+		broadcast: make(chan []byte),
+		register: make(chan *Member),
+		unregister: make(chan *Member),
 	}
 
 	rooms[newRoom.Code] = newRoom
@@ -94,15 +90,21 @@ func Find() []Room {
 }
 
 func Join(joinDto dto.JoinRoomDto, w http.ResponseWriter, r * http.Request) (error) {
-	room, exists := rooms[joinDto.QuizCode]
+	room, exists := rooms[joinDto.RoomCode]
 
+	fmt.Println("room", room)
+	
 	if !exists {
+		fmt.Println("room doesn't exist")
 		return errors.New("room doesn't exist")
 	}
+	
+	Upgrader.CheckOrigin = func(*http.Request) bool {return true}
 	
 	ws, err := Upgrader.Upgrade(w, r, nil)
 	
 	if err != nil {
+		fmt.Println("err", err)
 		return errors.New("error upgrading to websocket")
 	}
 	
@@ -110,12 +112,21 @@ func Join(joinDto dto.JoinRoomDto, w http.ResponseWriter, r * http.Request) (err
 	id, err := nanoid.Generate(alphabet, 10)
 	
 	if err != nil {
-		ws.WriteJSON(common.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
+		ws.WriteJSON(common.ApiResponse[interface{}]{Message: err.Error()})
 		ws.Close()
 	}
 	
+	// ? The first user to enter the room is the admin
+	role := 0
+
+	if room.UsedQuota > 0 {
+		role = 2
+	} else {
+		role = 1
+	}
+	
 	newMember := &Member{
-		Role: 2,
+		Role: role,
 		Username: joinDto.Username,
 		conn: ws,
 		send: make(chan []byte),
@@ -126,6 +137,7 @@ func Join(joinDto dto.JoinRoomDto, w http.ResponseWriter, r * http.Request) (err
   room.register <- newMember
 
 	go newMember.ReadPump()
+	go newMember.WritePump()
 
 	return nil
 }
@@ -135,6 +147,20 @@ func (room *Room) Init() {
 		select {
 		case member := <- room.register:
 			room.members[member] = *member
+
+			join_message := JoinMessage{
+				Username: member.Username, 
+				RoomCode: room.Code,
+			}
+
+			json, err := json.Marshal(join_message)
+			
+			if err != nil {
+				return
+			}
+			
+			member.send <- json
+
 		case member := <- room.unregister:
 			_, exists := room.members[member]
 

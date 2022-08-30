@@ -6,15 +6,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Member struct {
-	room *Room
-	Role int `json:"role"`
-	Id string `json:"id"`
-	Username string `json:"username"`
-	conn *websocket.Conn
-	send chan[]byte
-}
-
 func (m *Member) ReadPump() {
 	defer func() {
 		m.room.unregister <- m
@@ -35,7 +26,22 @@ func (m *Member) ReadPump() {
 	}
 }
 
-func (m *Member) Emit() {
-
+func (m *Member) WritePump() {
+	defer func() {
+		m.conn.Close()
+	}()
+	
+	for {
+		select {
+		case message, ok := <- m.send:
+			
+			if !ok {
+				m.conn.Close()
+				return
+			}
+			
+			m.conn.WriteMessage(1, message)
+		}
+	}
 }
 

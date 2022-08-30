@@ -2,6 +2,7 @@ package room
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -50,16 +51,32 @@ func CreateRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func JoinRoom(w http.ResponseWriter, r *http.Request) {
-	var body dto.JoinRoomDto
+	dto := dto.JoinRoomDto{}
 
-	decoder := json.NewDecoder(r.Body)
+	r.ParseForm()
 
-	if err := decoder.Decode(&body); err != nil {
-		log.Println("Error JoinRoomDto", err)
-		http.Error(w, "Bad Input", http.StatusBadRequest)
+	if room_code := r.Form.Get("room_code"); room_code != "" {
+		dto.RoomCode = room_code
+	} else {
+		http.Error(w, "invalid input, please specify room_code and username query in url", http.StatusBadRequest)
+		return
 	}
 
-	wshandler.Join(body, w, r)
+	if username := r.Form.Get("username"); username != "" {
+		dto.Username = username
+	} else {
+		http.Error(w, "invalid input, please specify username and username query in url", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("dto", dto)
+	
+	join_err := wshandler.Join(dto, w, r)
+
+	if join_err != nil {
+		http.Error(w, join_err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func FindRooms(w http.ResponseWriter, r *http.Request) {
