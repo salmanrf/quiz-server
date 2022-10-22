@@ -1,8 +1,8 @@
 package wshandler
 
 type JoinMessage struct {
+	Id string `json:"id"`
 	Username string `json:"username"`
-	RoomCode string `json:"room_code"`	
 	Role int `json:"role"`
 	Room Room `json:"room"`
 }

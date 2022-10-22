@@ -26,27 +26,6 @@ func SetupHandler() {
 		room.JoinRoom(w, r)
 	})
 
-	// http.HandleFunc("/ws/room", func (w http.ResponseWriter, r *http.Request) {
-	// 	corsMiddleware(w, r)
-
-	// 	if r.Method == http.MethodOptions {
-	// 		w.Write([]byte("OK"))
-	// 		return
-	// 	}
-		
-	// 	if r.Method == http.MethodGet {
-	// 		quiz.FindQuizzes(w, r)
-	// 		return
-	// 	}
-		
-	// 	if r.Method == http.MethodPost {
-	// 		quiz.CreateQuiz(w, r)
-	// 		return
-	// 	}
-
-	// 	http.Error(w, "Not Found", http.StatusNotFound)
-	// })
-	
 	// ? Quizzes handler
 	http.HandleFunc("/api/quiz", func (w http.ResponseWriter, r *http.Request) {
 		corsMiddleware(w, r)

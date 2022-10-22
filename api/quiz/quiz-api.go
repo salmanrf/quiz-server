@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/salmanrf/svelte-go-quiz-server/api/common"
 	"github.com/salmanrf/svelte-go-quiz-server/api/quiz/dto"
-	"github.com/salmanrf/svelte-go-quiz-server/quiz"
+	"github.com/salmanrf/svelte-go-quiz-server/api/quiz/models"
 )
 
 var upgrader = websocket.Upgrader{
@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func CreateQuiz(w http.ResponseWriter, r *http.Request) {
-	var body quiz.Quiz
+	var body dto.CreateQuizDto
 
 	decoder := json.NewDecoder(r.Body)
 
@@ -28,12 +28,17 @@ func CreateQuiz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := quiz.Create(body);
+	newQuiz, error := Create(body);
 
-	var response = common.ApiResponse[interface{}]{Message: "Success"}
+	data := make(map[string]string)
 
-	if !success {
-		response.Message = "Quiz with this code already exists."
+	data["code"] = newQuiz.Code
+	data["title"] = newQuiz.Title
+	
+	response := common.ApiResponse[interface{}]{Message: "Success", Data: data}
+
+	if error != nil {
+		response.Message = error.Error()
 		http.Error(w, response.Message, http.StatusBadRequest)
 	}
 	
@@ -43,7 +48,7 @@ func CreateQuiz(w http.ResponseWriter, r *http.Request) {
 }
 
 func FindQuizzes(w http.ResponseWriter, r *http.Request) {
-	quizzes := quiz.Find()
+	quizzes := Find()
 
 	r.ParseForm()
 	
@@ -53,14 +58,14 @@ func FindQuizzes(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println("page_number", page_number)
 	// fmt.Println("page_size", page_size)
 	
-	data := common.FindRes[quiz.Quiz]{
+	data := common.FindRes[models.Quiz]{
 		Items: quizzes,
 		TotalItems: 100,
 		PageSize: 100,
 		PageNumber: 1,
 	}
 	
-	response := common.ApiResponse[common.FindRes[quiz.Quiz]]{
+	response := common.ApiResponse[common.FindRes[models.Quiz]]{
 		Message: "Success", 
 		Data: data,
 	}
@@ -87,7 +92,7 @@ func JoinQuizRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := quiz.Get(input.Code); !ok {
+	if _, ok := Get(input.Code); !ok {
 		message := fmt.Sprintf("Quiz Room %v doesn't exists.", input.Code)
 		http.Error(w, message, http.StatusBadRequest)
 		return

@@ -2,13 +2,12 @@ package room
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/salmanrf/svelte-go-quiz-server/api/common"
+	"github.com/salmanrf/svelte-go-quiz-server/api/quiz"
 	"github.com/salmanrf/svelte-go-quiz-server/api/room/dto"
-	"github.com/salmanrf/svelte-go-quiz-server/quiz"
 	"github.com/salmanrf/svelte-go-quiz-server/wshandler"
 )
 
@@ -36,7 +35,10 @@ func CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data common.ApiResponse[wshandler.Room]
+	data := common.ApiResponse[wshandler.Room]{
+		Message: "Success",
+		Data: *room,
+	}
 
 	result, jsonerr := json.Marshal(data)
 
@@ -58,19 +60,24 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	if room_code := r.Form.Get("room_code"); room_code != "" {
 		dto.RoomCode = room_code
 	} else {
-		http.Error(w, "invalid input, please specify room_code and username query in url", http.StatusBadRequest)
+		http.Error(w, "invalid input, please specify room_code as query in url", http.StatusBadRequest)
 		return
 	}
 
 	if username := r.Form.Get("username"); username != "" {
 		dto.Username = username
 	} else {
-		http.Error(w, "invalid input, please specify username and username query in url", http.StatusBadRequest)
+		http.Error(w, "invalid input, please specify username as query in url", http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println("dto", dto)
-	
+	if password := r.Form.Get("password"); password != "" {
+		dto.Password = password
+	} else {
+		http.Error(w, "invalid input, please specify password as query in url", http.StatusBadRequest)
+		return
+	}
+
 	join_err := wshandler.Join(dto, w, r)
 
 	if join_err != nil {

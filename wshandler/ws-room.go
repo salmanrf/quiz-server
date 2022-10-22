@@ -1,14 +1,15 @@
 package wshandler
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/aidarkhanov/nanoid"
 	"github.com/gorilla/websocket"
 	"github.com/salmanrf/svelte-go-quiz-server/api/common"
+	"github.com/salmanrf/svelte-go-quiz-server/api/quiz"
 	"github.com/salmanrf/svelte-go-quiz-server/api/room/dto"
 )
 
@@ -20,29 +21,34 @@ var Upgrader = websocket.Upgrader{
 var rooms = make(map[string]*Room)
 
 func Create(createDto dto.CreateRoomDto) (*Room, error) {
-	// Upgrader.CheckOrigin = func (*http.Request) bool {return true}
-
-	// ws, err := Upgrader.Upgrade(w, r, nil)
-
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return nil, err
-	// }
-
+	quiz, exists := quiz.Get(createDto.QuizCode)
+	
+	if !exists {
+		fmt.Println("Error Creating room: Quiz doesnt exist.")
+		
+		return nil, errors.New("quiz doesn't exist")
+	}
+	
 	alphabet := nanoid.DefaultAlphabet
 	id, err := nanoid.Generate(alphabet, 10)
 
 	if err != nil {
-		// ws.WriteJSON(api.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
 		return nil, err
 	}
 	
 	newRoom := &Room{
+		Title: createDto.Title,
 		Code: id,
+		Quota: createDto.Quota,
+		QuestionTimeout: createDto.QuestionTimeout,
+		NextQuestionInterval: createDto.NextQuestionInterval,
+		quiz: *quiz,
+		state: RoomWaitingNext,
 		members: make(map[*Member]Member),
 		broadcast: make(chan []byte),
 		register: make(chan *Member),
 		unregister: make(chan *Member),
+		event: make(chan *Message[interface{}]),
 	}
 
 	rooms[newRoom.Code] = newRoom
@@ -50,30 +56,6 @@ func Create(createDto dto.CreateRoomDto) (*Room, error) {
 	go newRoom.Init()
 	
 	return newRoom, nil
-	
-	// id, err = nanoid.Generate(alphabet, 10)
-	
-	// if err != nil {
-	// 	ws.WriteJSON(api.ApiResponse[interface{}]{Message: "Encountered Internal Error."})
-	// 	return nil, err
-	// }
-	
-	// roomAdmin := &Member{
-	// 	Id: id,
-	// 	Role: 1,
-	// 	room: newRoom,
-	// 	conn: ws,
-	// 	Username: createDto.AdminName,
-	// }
-	
-	// go newRoom.Init()
-
-	// fmt.Println("newRoom", newRoom)
-	// fmt.Println("roomAdmin", roomAdmin)
-	
-	// newRoom.register <- roomAdmin
-	
-	// return newRoom, err
 }
 
 func Find() []Room {
@@ -92,11 +74,14 @@ func Find() []Room {
 func Join(joinDto dto.JoinRoomDto, w http.ResponseWriter, r * http.Request) (error) {
 	room, exists := rooms[joinDto.RoomCode]
 
-	fmt.Println("room", room)
-	
 	if !exists {
-		fmt.Println("room doesn't exist")
+		fmt.Println("Room doesn't exist")
 		return errors.New("room doesn't exist")
+	}
+	
+	if room.UsedQuota + 1 > room.Quota {
+		fmt.Println("Room has reached maximum quota")	
+		return errors.New("room has reached maximum quota")	
 	}
 	
 	Upgrader.CheckOrigin = func(*http.Request) bool {return true}
@@ -117,13 +102,14 @@ func Join(joinDto dto.JoinRoomDto, w http.ResponseWriter, r * http.Request) (err
 	}
 	
 	// ? The first user to enter the room is the admin
-	role := 0
+	role := 1
 
 	if room.UsedQuota > 0 {
 		role = 2
-	} else {
-		role = 1
 	}
+
+	// ? Increment current room used quota
+	room.UsedQuota++
 	
 	newMember := &Member{
 		Role: role,
@@ -134,44 +120,84 @@ func Join(joinDto dto.JoinRoomDto, w http.ResponseWriter, r * http.Request) (err
 		Id: id,
 	}
 
-  room.register <- newMember
+	defer func() {
+		message := &Message[interface{}]{
+			Event: "register", 
+			sender: newMember,
+		}
+		
+		room.event <- message
+	}()
 
 	go newMember.ReadPump()
 	go newMember.WritePump()
-
+	
 	return nil
 }
 
-func (room *Room) Init() {
-	for {
-		select {
-		case member := <- room.register:
-			room.members[member] = *member
+func Start(r *Room, _ *Message[interface{}]) {
+	interval := r.NextQuestionInterval // ? Interval to next question in milliseconds
+	timeout := r.QuestionTimeout // ? Question timeout in milliseconds
 
-			join_message := JoinMessage{
-				Username: member.Username, 
-				RoomCode: room.Code,
-			}
+	r.state = RoomWaitingNext
+	<- time.After(time.Duration(interval) * time.Millisecond)
+	
+	for _, question := range r.quiz.Questions {
+		r.state = RoomWaiting
+		
+		fmt.Println("question", question)
 
-			json, err := json.Marshal(join_message)
-			
-			if err != nil {
-				return
-			}
-			
-			member.send <- json
+		<- time.After(time.Duration(timeout) * time.Millisecond)
+		
+		<- time.After(time.Duration(interval) * time.Millisecond)
 
-		case member := <- room.unregister:
-			_, exists := room.members[member]
+		r.state = RoomWaitingNext
+	}
 
-			if exists {
-				delete(room.members, member)
-				close(member.send)
-			}
-		case message := <- room.broadcast:
-			for m := range room.members {
-				m.send <- message
-			}
+	fmt.Println("Finish")
+}
+
+func OnAnswer(r *Room, message *Message[interface{}]) {
+	
+}
+
+func OnJoin(r *Room, message *Message[interface{}]) {
+	new_member := message.sender
+	
+	if new_member.Role == 1 {
+		r.admin = new_member
+	} else {
+		r.members[message.sender] = *message.sender
+	}
+		
+	room := Room{
+		Code: r.Code,
+		Title: r.Title,
+		Quota: r.Quota,
+		UsedQuota: r.UsedQuota,
+	}
+	
+	join_message := Message[JoinMessage] {
+		Event: "room_join",
+		Data: JoinMessage{
+			Id: new_member.Id, 
+			Username: new_member.Username, 
+			Role: new_member.Role,
+			Room: room,
+		},
+	}
+
+	new_member.conn.WriteJSON(join_message)
+
+	join_message.Event = "member_join"
+	
+	r.admin.conn.WriteJSON(join_message)
+	
+	for m := range r.members {
+		if m == new_member {
+			continue
 		}
+
+		m.conn.WriteJSON(join_message)
 	}
 }

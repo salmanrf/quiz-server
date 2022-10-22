@@ -33,12 +33,12 @@
     "method": "POST",
     "sortNum": 20000,
     "created": "2022-08-25T01:23:54.063Z",
-    "modified": "2022-08-25T01:25:59.267Z",
+    "modified": "2022-09-27T01:20:06.223Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"code\": \"ashquiz\",\n  \"title\": \"AshiapQuiz\",\n  \"questions\": [\n    {\n      \"type\": \"multiple-answer\",\n      \"description\": \"\",\n      \"answers\": [\n        {\n          \"value\": \"1\",\n          \"correct\": true\n        },\n        {\n          \"value\": \"2\",\n          \"correct\": true\n        },\n        {\n          \"value\": \"3\",\n          \"correct\": false\n        }\n      ]\n    },\n    {\n      \"type\": \"single-answer\",\n      \"description\": \"\",\n      \"answers\": [\n        {\n          \"value\": \"1\",\n          \"correct\": true\n        },\n        {\n          \"value\": \"2\",\n          \"correct\": false\n        },\n        {\n          \"value\": \"3\",\n          \"correct\": false\n        }\n      ]\n    }\n  ]\n}",
+      "raw": "{\n  \"title\": \"AshiapQuiz\",\n  \"questions\": [\n    {\n      \"type\": \"multiple-answer\",\n      \"correct_answer\": \"\",     \n      \"description\": \"\",\n      \"answers\": [\n        {\n          \"value\": \"1\",\n          \"label\": \"A\"\n        },\n        {\n          \"value\": \"2\",\n          \"label\": \"B\"\n        },\n        {\n          \"value\": \"3\",\n          \"label\": \"C\"\n        },\n        {\n          \"value\": \"4\",\n          \"label\": \"D\"\n        }\n      ]\n    },\n    {\n      \"type\": \"single-answer\",\n      \"description\": \"\",\n      \"answers\": [\n        {\n          \"value\": \"1\",\n          \"label\": \"A\"\n        },\n        {\n          \"value\": \"2\",\n          \"label\": \"B\"\n        },\n        {\n          \"value\": \"3\",\n          \"label\": \"C\"\n        },\n        {\n          \"value\": \"4\",\n          \"label\": \"D\"\n        }\n      ]\n    }\n  ]\n}",
       "form": []
     },
     "tests": []
@@ -52,12 +52,12 @@
     "method": "POST",
     "sortNum": 10000,
     "created": "2022-08-28T06:09:46.032Z",
-    "modified": "2022-08-28T08:23:08.199Z",
+    "modified": "2022-09-11T02:09:51.879Z",
     "headers": [],
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"quiz_code\": \"ashquiz\",\n  \"admin_name\": \"Nortnb\",\n  \"password\": \"\",\n  \"next_question_interval\": 500\n}",
+      "raw": "{\n  \"title\": \"One Difficult Quiz\",\n  \"quiz_code\": \"ashquiz\",\n  \"admin_name\": \"Nortnb\",\n  \"password\": \"ashiap123\",\n  \"next_question_interval\": 3000,\n  \"quota\": 10,\n  \"question_timeout\": 3000\n}",
       "form": []
     },
     "tests": []
@@ -86,16 +86,26 @@
     "colId": "12e8f618-f60a-46e8-bf10-ef5c83e36bc7",
     "containerId": "",
     "name": "Join Room",
-    "url": "localhost:8080/ws/room?room_code=w8Zbb8t5qQ",
+    "url": "localhost:8080/ws/room/?room_code=w8Zbb8t5qQ&username=ashiap&password=asdasd",
     "method": "GET",
     "sortNum": 15000,
     "created": "2022-08-28T08:46:24.551Z",
-    "modified": "2022-08-30T01:57:39.004Z",
+    "modified": "2022-10-01T12:24:35.427Z",
     "headers": [],
     "params": [
       {
         "name": "room_code",
         "value": "w8Zbb8t5qQ",
+        "isPath": false
+      },
+      {
+        "name": "username",
+        "value": "ashiap",
+        "isPath": false
+      },
+      {
+        "name": "password",
+        "value": "asdasd",
         "isPath": false
       }
     ],
